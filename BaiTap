@@ -1,0 +1,114 @@
+--CÂU1---
+---In ra dòng ‘Xin chào’---
+ALTER PROCEDURE In_Dong
+		@ten nvarchar(25)
+as
+begin
+	print 'hello ' + @ten;
+end;
+exec In_Dong N'Phạm Quang Huy';
+
+----Nhập vào 2 số @s1,@s2.@s1,@s2. In ra câu ‘Tổng là : @tg’ với @tg=@s1+@s2.-----
+ALTER PROCEDURE Tong_La
+		@s1 int, @s2 int 
+as
+begin
+ declare @tg int;
+	set @tg=@s1+@s2;
+	print N'Tổng là: ' + cast(@tg as varchar); 
+end;
+ exec Tong_La 7,9
+
+ ---- In ra tổng các số chẵn từ 1 đến @n---
+CREATE PROCEDURE Tong_So_Chan
+			@n int  
+AS 
+	declare @tong int=0, @dem int=2;
+	while @dem < @n
+		BEGIN
+			 set @tong = @tong+@dem
+			 set @dem = @dem+2
+		END
+	print'tong' + cast(@tong as varchar(4))
+
+exec Tong_So_Chan 12 
+
+---In ra ước chung lớn nhất----
+CREATE PROCEDURE Uoc_Chung_LN
+		@a int, @b int
+as
+	while (@a!= @b) 
+		if (@a>@b)
+			set @a=@a-@b
+		else 
+			set @b= @b-@a
+return @a
+
+declare @c int 
+exec @c= Uoc_Chung_LN 10,60
+select @c'UCLN'
+
+---CÂU2--=
+---Nhập vào @Manv, xuất thông tin các nhân viên theo @Manv.
+CREATE PROCEDURE Xuat_TTNV
+		@MaNV nvarchar(9)
+as
+begin
+		select * from NHANVIEN where MANV=@MaNV;
+
+end;
+
+exec Xuat_TTNV '005'
+
+---Nhập vào @MaDa (mã đề án), cho biết số lượng nhân viên tham gia đề án đó.
+CREATE PROCEDURE SoLuong_NVTTDA
+		@MaDA int 
+as
+begin
+	select count(ma_nvien) as 'So luong' from PHANCONG where MADA =@MaDA;
+end;
+ 
+exec [dbo].[SoLuong_NVTTDA] 4;
+
+--cho biết số lượng nhân viên tham gia đề án có mã đề án là @MaDa và địa điểm đề án là @Ddiem_DA--
+CREATE PROCEDURE ThongKe_NVTTDA
+		@MaDA int, @DDiem_DA nvarchar(20)
+as
+begin
+	select count (b.ma_nvien) as 'so luong'
+		from  DEAN a inner join PHANCONG b on a.MADA = b.MADA
+		where a.MADA = @MaDA and a.DDIEM_DA = @DDiem_DA;
+end;
+
+exec [dbo].[ThongKe_NVTTDA] 1, N'Vũng Tàu'
+select * from DEAN;
+
+---xuất thông tin các nhân viên có trưởng phòng là @Trphg và các nhân viên này không có thân nhân.--
+CREATE PROCEDURE XuatThongTin_NV
+		@trPHG  nvarchar(9)
+as
+begin
+	select b.* from PHONGBAN a inner join NHANVIEN b on a.MAPHG = b.PHG
+		where a.TRPHG = @trPHG and not exists ( select *from THANNHAN where MANV= b.MANV)
+end;
+
+exec [dbo].[XuatThongTin_NV] '005'
+select * from PHONGBAN;
+select * from THANNHAN;
+
+---kiểm tra nhân viên có mã @Manv có thuộc phòng ban có mã @Mapb hay không--
+CREATE PROCEDURE KiemTra_NV
+		@MaNV nvarchar(9), @MaPB INT 
+as
+begin
+	declare @Dem int ;
+	select @Dem = count(manv) from NHANVIEN where MANV = @MaNV and PHG = @MaPB;
+	
+	RETURN @dem;	
+end;
+
+declare @result int;
+exec @result = [dbo].[KiemTra_NV] '005',5;
+select @result;
+
+select * from NHANVIEN;
