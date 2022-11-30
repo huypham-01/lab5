@@ -112,3 +112,69 @@ exec @result = [dbo].[KiemTra_NV] '005',5;
 select @result;
 
 select * from NHANVIEN;
+----CAU3-----
+----Thêm phòng ban có tên CNTT vào csdl QLDA, các giá trị được thêm vào dưới dạng tham số đầu vào, kiếm tra nếu trùng Maphg thì thông báo thêm thất bại.
+CREATE PROCEDURE ThemPB
+		@TENPHG nvarchar(15), @MAPHG int, @TRPHG nvarchar(9), @NG_NHANCHUC date
+as
+begin
+	if exists(select*from PHONGBAN where MAPHG = @MAPHG)
+	begin
+		print N' Mãphòng đã tồn tại';
+		return;
+	end
+	insert into PHONGBAN(TENPHG,MAPHG,TRPHG,NG_NHANCHUC) values(@TENPHG,@MAPHG,@TRPHG,@NG_NHANCHUC);
+end;
+
+exec [dbo].[ThemPB] 'CNTT',15, '005', '10-12-2020';
+
+---Cập nhật phòng ban có tên CNTT thành phòng IT.----
+CREATE PROCEDURE CapNhat_PB
+	@TENPHGCU nvarchar(15), @TENPHG nvarchar(15), @MAPHG int,
+	@TRPHG nvarchar(9), @NG_NHANCHUC date
+as
+begin
+	update PHONGBAN
+	set TENPHG = @TENPHG,
+		MAPHG = @MAPHG,
+		TRPHG = @TRPHG,
+		NG_NHANCHUC = @NG_NHANCHUC
+	where TENPHG = @TENPHGCU;
+end;
+
+exec [dbo].[CapNhat_PB] 'CNTT', 'IT', 10, '005', '1-1-2020';
+
+---Thêm một nhân viên vào bảng NhanVien, tất cả giá trị đều truyền dưới dạng tham số đầu vào--
+CREATE PROCEDURE Them1_NV
+		@HONV nvarchar(15), @TENLOT nvarchar(15), @TENNV nvarchar(15),
+		@MANV nvarchar(9), @NGSINH datetime, @DCHI nvarchar(30),
+		@PHAI nvarchar(3), @LUONG float, @PHG int
+as
+begin
+	if not exists(select*from PHONGBAN where TENPHG = 'IT')
+	begin
+		print N'Nhân viên phải trực thuộc phòng IT';
+		return;
+	end;
+	declare @MA_NQL nvarchar(9);
+	if @LUONG > 25000
+		set @MA_NQL = '005';
+	else
+		set @MA_NQL = '009';
+	declare @age int;
+	select @age = DATEDIFF(year,@NGSINH,getdate()) + 1;
+	if @PHAI = 'Nam' and (@age < 18 or @age >60)
+	begin
+		print N'Nam phải có độ tuổi từ 18-65';
+		return;
+	end;
+	else if @PHAI = 'Nữ' and (@age < 18 or @age >60)
+	begin
+		print N'Nữ phải có độ tuổi từ 18-60';
+		return;
+	end;
+	INSERT INTO NHANVIEN(HONV,TENLOT,TENNV,MANV,NGSINH,DCHI,PHAI,LUONG,MA_NQL,PHG)
+		VALUES(@HONV,@TENLOT,@TENNV,@MANV,@NGSINH,@DCHI,@PHAI,@LUONG,@MA_NQL,@PHG)
+end;
+
+exec [dbo].[Them1_NV] N'Ngô',N'Thừa',N'Ấn','022','12-5-1977',N'TP Hồ Chí Minh','Nam',30000,6;
